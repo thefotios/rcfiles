@@ -1,4 +1,4 @@
-#!/home/fotios/.rvm/rubies/ruby-1.9.3-p125/bin/ruby
+#!/usr/bin/env ruby
 #
 # This file is generated code. DO NOT send patches for it.
 #
@@ -212,13 +212,10 @@ module Hub
       'github.com' == host ? 'api.github.com' : host
     end
 
-    def repo_info project
-      get "https://%s/repos/%s/%s" %
-        [api_host(project.host), project.owner, project.name]
-    end
-
     def repo_exists? project
-      repo_info(project).success?
+      res = get "https://%s/repos/%s/%s" %
+        [api_host(project.host), project.owner, project.name]
+      res.success?
     end
 
     def fork_repo project
@@ -307,13 +304,11 @@ module Hub
       end
 
       def perform_request url, type
-        url = URI.parse url unless url.respond_to? :host
+        url = URI.parse url unless url.respond_to? :hostname
 
         require 'net/https'
         req = Net::HTTP.const_get(type).new(url.request_uri)
-        http = configure_connection(req, url) do |host_url|
-          create_connection host_url
-        end
+        http = create_connection(url)
 
         apply_authentication(req, url)
         yield req if block_given?
@@ -322,17 +317,6 @@ module Hub
         res
       rescue SocketError => err
         raise Context::FatalError, "error with #{type.to_s.upcase} #{url} (#{err.message})"
-      end
-
-      def configure_connection req, url
-        if ENV['HUB_TEST_HOST']
-          req['Host'] = url.host
-          url = url.dup
-          url.scheme = 'http'
-          url.host, test_port = ENV['HUB_TEST_HOST'].split(':')
-          url.port = test_port.to_i if test_port
-        end
-        yield url
       end
 
       def apply_authentication req, url
@@ -695,16 +679,13 @@ module Hub
         git_config('hub.host', :all).to_s.split("\n") + [default_host]
       end
 
-      def self.default_host
+      def default_host
         ENV['GITHUB_HOST'] || main_host
       end
 
-      def self.main_host
+      def main_host
         'github.com'
       end
-
-      extend Forwardable
-      def_delegators :'self.class', :default_host, :main_host
 
       def ssh_config
         @ssh_config ||= SshConfig.new
@@ -719,16 +700,13 @@ module Hub
         end
       end
 
-      attr_accessor :repo_data
-
       def initialize(*args)
         super
-        self.host ||= (local_repo || LocalRepo).default_host
+        self.host ||= local_repo.default_host
       end
 
       def private?
-        repo_data ? repo_data.fetch('private') :
-          host != (local_repo || LocalRepo).main_host
+        local_repo and host != local_repo.main_host
       end
 
       def owned_by(new_owner)
@@ -877,7 +855,7 @@ module Hub
         project.name = name
         project
       else
-        GithubProject.new(local_repo(false), owner, name)
+        GithubProject.new(local_repo, owner, name)
       end
     end
 
@@ -1128,7 +1106,7 @@ module Hub
 
       respect_help_flags(expanded_args || args) if custom_command? cmd
 
-      cmd = cmd.gsub(/(\w)-/, '\1_')
+      cmd = cmd.sub(/(\w)-/, '\1_')
       if method_defined?(cmd) and cmd != 'run'
         args.replace expanded_args if expanded_args
         send(cmd, args)
@@ -1268,8 +1246,9 @@ module Hub
           if arg =~ NAME_WITH_OWNER_RE and !File.directory?(arg)
             name, owner = arg, nil
             owner, name = name.split('/', 2) if name.index('/')
-            project = github_project(name, owner || github_user)
-            ssh ||= args[0] != 'submodule' && project.owner == github_user(project.host) { }
+            host = ENV['GITHUB_HOST'] || 'github.com'
+            project = Context::GithubProject.new(nil, owner || github_user(host), name, host)
+            ssh ||= args[0] != 'submodule' && project.owner == github_user(host) || host != 'github.com'
             args[idx] = project.git_url(:private => ssh, :https => https_protocol?)
           end
           break
@@ -1339,11 +1318,7 @@ module Hub
       projects = names.map { |name|
         unless name =~ /\W/ or remotes.include?(name) or remotes_group(name)
           project = github_project(nil, name)
-          repo_info = api_client.repo_info(project)
-          if repo_info.success?
-            project.repo_data = repo_info.data
-            project
-          end
+          project if api_client.repo_exists?(project)
         end
       }.compact
 
@@ -1376,28 +1351,6 @@ module Hub
         idx = args.index url_arg
         args.delete_at idx
         args.insert idx, '--track', '-B', new_branch_name, "#{user}/#{branch}"
-      end
-    end
-
-    def merge(args)
-      _, url_arg = args.words
-      if url = resolve_github_url(url_arg) and url.project_path =~ /^pull\/(\d+)/
-        pull_id = $1
-        pull_data = api_client.pullrequest_info(url.project, pull_id)
-
-        user, branch = pull_data['head']['label'].split(':', 2)
-        abort "Error: #{user}'s fork is not available anymore" unless pull_data['head']['repo']
-
-        url = github_project(url.project_name, user).git_url(:private => pull_data['head']['repo']['private'],
-                                                             :https => https_protocol?)
-
-        merge_head = "#{user}/#{branch}"
-        args.before ['fetch', url, "+refs/heads/#{branch}:refs/remotes/#{merge_head}"]
-
-        idx = args.index url_arg
-        args.delete_at idx
-        args.insert idx, merge_head, '--no-ff', '-m',
-                    "Merge pull request ##{pull_id} from #{merge_head}\n\n#{pull_data['title']}"
       end
     end
 
@@ -1442,7 +1395,8 @@ module Hub
 
     def init(args)
       if args.delete('-g')
-        project = github_project(File.basename(current_dir))
+        host = ENV['GITHUB_HOST'] || 'github.com'
+        project = Context::GithubProject.new(nil, github_user(host), File.basename(current_dir), host)
         url = project.git_url(:private => true, :https => https_protocol?)
         args.after ['remote', 'add', 'origin', url]
       end
@@ -1476,8 +1430,7 @@ module Hub
     def create(args)
       if !is_repo?
         abort "'create' must be run from inside a git repository"
-      else
-        owner = github_user
+      elsif owner = github_user
         args.shift
         options = {}
         options[:private] = true if args.delete('-p')
@@ -1667,9 +1620,10 @@ module Hub
       end
     end
 
-    def github_user host = nil, &block
-      host ||= (local_repo(false) || Context::LocalRepo).default_host
-      api_client.config.username(host, &block)
+    def github_user host = nil
+      host ||= local_repo(false) && local_repo.main_host
+      return nil if host.nil?
+      api_client.config.username(host) { }
     end
 
     def custom_command? cmd
@@ -1869,7 +1823,7 @@ help
       title.tr!("\n", ' ')
       title.strip!
       body.strip!
-
+      
       [title =~ /\S/ ? title : nil, body =~ /\S/ ? body : nil]
     end
 
@@ -1957,7 +1911,7 @@ __END__
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "HUB" "1" "May 2012" "DEFUNKT" "Git Manual"
+.TH "HUB" "1" "April 2012" "DEFUNKT" "Git Manual"
 .
 .SH "NAME"
 \fBhub\fR \- git + hub = github
@@ -1985,9 +1939,6 @@ __END__
 .
 .br
 \fBgit checkout\fR \fIPULLREQ\-URL\fR [\fIBRANCH\fR]
-.
-.br
-\fBgit merge\fR \fIPULLREQ\-URL\fR
 .
 .br
 \fBgit cherry\-pick\fR \fIGITHUB\-REF\fR
@@ -2053,10 +2004,6 @@ Adds missing remote(s) with \fBgit remote add\fR prior to fetching\. New remotes
 .TP
 \fBgit checkout\fR \fIPULLREQ\-URL\fR [\fIBRANCH\fR]
 Checks out the head of the pull request as a local branch, to allow for reviewing, rebasing and otherwise cleaning up the commits in the pull request before merging\. The name of the local branch can explicitly be set with \fIBRANCH\fR\.
-.
-.TP
-\fBgit merge\fR \fIPULLREQ\-URL\fR
-Merge the pull request with a commit message that includes the pull request ID and title, similar to the GitHub Merge Button\.
 .
 .TP
 \fBgit cherry\-pick\fR \fIGITHUB\-REF\fR
@@ -2263,21 +2210,11 @@ $ git pull\-request \-i 123
 .
 .nf
 
-$ git checkout https://github\.com/defunkt/hub/pull/73
-> git remote add \-f \-t feature git://github:com/mislav/hub\.git
-> git checkout \-\-track \-B mislav\-feature mislav/feature
+# $ git checkout https://github\.com/defunkt/hub/pull/73
+# > git remote add \-f \-t feature git://github:com/mislav/hub\.git
+# > git checkout \-\-track \-B mislav\-feature mislav/feature
 
-$ git checkout https://github\.com/defunkt/hub/pull/73 custom\-branch\-name
-.
-.fi
-.
-.SS "git merge"
-.
-.nf
-
-$ git merge https://github\.com/defunkt/hub/pull/73
-> git fetch git://github\.com/mislav/hub\.git +refs/heads/feature:refs/remotes/mislav/feature
-> git merge mislav/feature \-\-no\-ff \-m \'Merge pull request #73 from mislav/feature\.\.\.\'
+# $ git checkout https://github\.com/defunkt/hub/pull/73 custom\-branch\-name
 .
 .fi
 .
