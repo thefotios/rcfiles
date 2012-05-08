@@ -1,18 +1,35 @@
 [user]
-	name = Fotios Lindiakos
-	email = fotioslindiakos@gmail.com
+  name = Fotios Lindiakos
+  email = fotioslindiakos@gmail.com
 [color]
-	ui = true
+  ui = auto
+[color "branch"]
+  current = yellow reverse
+  local = yellow
+  remote = green
+[color "diff"]
+  meta = yellow bold
+  frag = magenta bold
+  old = red bold
+  new = green bold
+  whitespace = red reverse
+[color "status"]
+  added = yellow
+  changed = green
+  untracked = cyan
 [alias]
-  b = branch -v
-	s = status
-	ci = commit
-	co = checkout
-	br = branch
-	wc = whatchanged
-	fix = commit --amend -C HEAD
-	d = diff
-[merge]
-	tool = vimdiff
+  b = branch -vv
+  s = status
+  ci = commit
+  co = checkout
+  br = branch
+  wc = whatchanged
+  fix = commit --amend -C HEAD
+  d = diff
 [core]
-	excludesfile = /home/fotios/.gitignore
+  excludesfile = /home/fotios/.gitignore
+  whitespace=fix,-indent-with-non-tab,trailing-space,cr-at-eol
+[merge]
+  tool = vimdiff
+[branch]
+  autosetupmerge = true
