@@ -1,0 +1,18 @@
+[user]
+	name = Fotios Lindiakos
+	email = fotioslindiakos@gmail.com
+[color]
+	ui = true
+[alias]
+  b = branch -v
+	s = status
+	ci = commit
+	co = checkout
+	br = branch
+	wc = whatchanged
+	fix = commit --amend -C HEAD
+	d = diff
+[merge]
+	tool = vimdiff
+[core]
+	excludesfile = /home/fotios/.gitignore
