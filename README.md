@@ -4,3 +4,4 @@
 
 # TODO #
 * Make Rakefile to symlink
+* Automatically check for updates to submodules
