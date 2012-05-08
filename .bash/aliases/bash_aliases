@@ -1,0 +1,30 @@
+#alias rake='bundle exec rake'
+alias railss='sudo bundle exec rails s'
+alias sudo='sudo '
+#alias irssi='screen -RR irssi irssi'
+#alias screen='_ssh_auth_save ; screen'
+alias version='git tag | grep rhc-site | sort -V | tail -1'
+
+#alias ignore='git update-index --assume-unchanged public/javascripts/script.js  public/stylesheets/style.css public/javascripts/control_panel.js'
+#alias unignore='git update-index --no-assume-unchanged public/javascripts/script.js  public/stylesheets/style.css public/javascripts/control_panel.js'
+#
+alias ggrep="grep -r --exclude-dir='man' --exclude-dir='.to_delete' --exclude-dir='log' --exclude-dir='.git' --exclude='*.swp' --exclude='*.obsolete'"
+
+alias fpaste="fpaste -n fotios -o"
+
+mvim()
+{
+    (unset GEM_PATH GEM_HOME; command vim "$@")
+}
+
+upsearch () {
+  slashes=${PWD//[^\/]/}
+  directory="$PWD"
+  for (( n=${#slashes}; n>0; --n ))
+  do
+    test -e "$directory/$1" && echo "$directory/$1" && return 
+    directory="$directory/.."
+  done
+}
+
+alias git=hub

@@ -1,0 +1,6 @@
+PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting
+
+[[ -s "/home/fotios/.rvm/scripts/rvm" ]] && source "/home/fotios/.rvm/scripts/rvm"
+[[ -s "$rvm_path/contrib/ps1_functions" ]] &&
+  source "$rvm_path/contrib/ps1_functions"
+ps1_set
