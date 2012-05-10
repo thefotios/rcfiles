@@ -26,6 +26,7 @@
   wc = whatchanged
   fix = commit --amend -C HEAD
   d = diff
+  pa = pull --recurse-submodules
 [core]
   excludesfile = /home/fotios/.gitignore
   whitespace=fix,-indent-with-non-tab,trailing-space,cr-at-eol
@@ -33,3 +34,5 @@
   tool = vimdiff
 [branch]
   autosetupmerge = true
+[github]
+	user = fotioslindiakos@gmail.com
