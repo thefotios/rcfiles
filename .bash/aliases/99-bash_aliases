@@ -26,5 +26,3 @@ upsearch () {
     directory="$directory/.."
   done
 }
-
-alias git=hub
