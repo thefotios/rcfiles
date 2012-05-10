@@ -1,3 +1,4 @@
 [submodule ".vim"]
 	path = .vim
 	url = git@github.com:fotioslindiakos/dot_vim.git
+  ignore = untracked
