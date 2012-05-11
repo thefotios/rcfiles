@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+vim -c ':Gist a835740d7d06ce084b51' -c ':only'
+
+#temp=$(mktemp --suffix .md)
+#
+#pushd ~/projects/ideas
+#vim -o $temp ideas.md
+#git pull && $(cat $temp >> ideas.md) && git commit -am "Added stuff" && git push && popd
+#rm $temp
