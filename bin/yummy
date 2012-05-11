@@ -1,0 +1,29 @@
+#!/bin/bash - 
+#===============================================================================
+#
+#          FILE: yummy.sh
+# 
+#         USAGE: ./yummy.sh 
+# 
+#   DESCRIPTION: 
+# 
+#       OPTIONS: ---
+#  REQUIREMENTS: ---
+#          BUGS: ---
+#         NOTES: ---
+#        AUTHOR: YOUR NAME (), 
+#  ORGANIZATION: 
+#       CREATED: 05/10/2012 09:58:10 PM EDT
+#      REVISION:  ---
+#===============================================================================
+
+set -o nounset                              # Treat unset variables as an error
+
+target=$1
+
+if [ "$target" != "update" ]
+then
+  target="install $target"
+fi
+
+sudo yum -y $target
