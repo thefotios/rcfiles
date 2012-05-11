@@ -26,3 +26,5 @@ upsearch () {
     directory="$directory/.."
   done
 }
+
+alias htop="htop -u $USER"
