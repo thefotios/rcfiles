@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+vol=$1
+
+if [ -z $vol ]; then vol=toggle; fi
+
+amixer set Master $vol > /dev/null
