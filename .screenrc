@@ -36,3 +36,5 @@ shell -/bin/bash
 
 # Finally migh get scrolling working
 termcapinfo xterm* ti@:te@
+
+term xterm-256color
