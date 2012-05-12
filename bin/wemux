@@ -14,19 +14,28 @@ function log(){
   logger -t wemux -s $@
 }
 
-name=$(basename $0)
-# Call with echo to get full path according to man page
-wemuxes=$(which -a $name)
-echo $wemuxes
-wemuxes=${wemuxes//$0}
-echo $wemuxes
-wemux=`echo $wemuxes | awk '{print $1}'`
-echo $wemux
-exit
+function real_bin(){
+  path=$1
+  # Get the base name of my function to override
+  name=$(basename "$path")
+  # Call with echo to get full path according to man page
+  paths=$(which -a $name)
+  # Remove this script from the paths list
+  paths=${paths//$path}
+  # This is the real bin if it's the only one
+  if [[ ! "$paths" == "" ]]; then
+    # Print the first remaining path
+    path=`echo $paths | awk '{print $1}'`
+  fi
+  echo $path
+}
 
+# Get the real binary if we named ours wemux
+# Wouldn't it be nice if bash had some sort of 'super' function?!
+wemux=$(real_bin $0)
+
+# Get a list of servers
 list=$($wemux list)
-
-regex=" <- current server$"
 
 if [[ ! $list =~ 'No wemux servers' ]]; then
   echo "${list}"
@@ -34,6 +43,8 @@ if [[ ! $list =~ 'No wemux servers' ]]; then
   echo "* Select a server by number/name"
 fi
 
+# Regex if a current server is marked
+regex=" <- current server$"
 if [[ $list =~ $regex ]]; then 
   echo "* Hit Enter for current server"; 
 fi
