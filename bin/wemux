@@ -23,19 +23,31 @@ function real_bin(){
   # Remove this script from the paths list
   paths=${paths//$path}
   # This is the real bin if it's the only one
-  if [[ ! "$paths" == "" ]]; then
+  if [[ $paths ]]; then
     # Print the first remaining path
     path=`echo $paths | awk '{print $1}'`
   fi
   echo $path
 }
 
+function get_servers(){
+  # Get a list of servers
+  list=$($wemux list)
+  echo "${list}"
+}
+
 # Get the real binary if we named ours wemux
 # Wouldn't it be nice if bash had some sort of 'super' function?!
 wemux=$(real_bin $0)
 
-# Get a list of servers
-list=$($wemux list)
+
+# If args are passed, just pass them along and exit
+if [[ $@ ]]; then
+  $wemux $@
+  exit
+fi
+
+list=$(get_servers)
 
 if [[ ! $list =~ 'No wemux servers' ]]; then
   echo "${list}"

@@ -30,3 +30,5 @@ upsearch () {
 alias htop="htop -u $USER"
 
 alias lL="find . -maxdepth 1 -type l -exec ls -la --color {} \;"
+
+function mcd() { [ -n "$1" ] && mkdir -p "$@" && cd "$1"; }

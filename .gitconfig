@@ -26,7 +26,8 @@
   wc = whatchanged
   fix = commit --amend -C HEAD
   d = diff
-  pa = pull --recurse-submodules
+  pa = submodule foreach git pull
+  lc = log ORIG_HEAD.. --stat --no-merges
 [core]
   excludesfile = /home/fotios/.gitignore
   whitespace=fix,-indent-with-non-tab,trailing-space,cr-at-eol
@@ -36,3 +37,5 @@
   autosetupmerge = true
 [github]
 	user = fotioslindiakos
+[push]
+	default = upstream
