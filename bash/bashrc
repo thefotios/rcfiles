@@ -10,8 +10,8 @@ fi
 
 PATH=$HOME/bin:$HOME/.rcfiles/bin:$PATH
 
-for f in ~/.bash/aliases/*; do source $f; done
-for f in ~/.bash/completions/*; do source $f; done
+for f in $HOME/.bash/aliases/*; do source $f; done
+for f in $HOME/.bash/completions/*; do source $f; done
 
 complete -cf sudo
 
