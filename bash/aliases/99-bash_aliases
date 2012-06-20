@@ -1,6 +1,5 @@
 #alias rake='bundle exec rake'
 alias railss='sudo bundle exec rails s'
-alias sudo='sudo '
 #alias irssi='screen -RR irssi irssi'
 #alias screen='_ssh_auth_save ; screen'
 alias version='git tag | grep rhc-site | sort -V | tail -1'
@@ -8,7 +7,20 @@ alias version='git tag | grep rhc-site | sort -V | tail -1'
 #alias ignore='git update-index --assume-unchanged public/javascripts/script.js  public/stylesheets/style.css public/javascripts/control_panel.js'
 #alias unignore='git update-index --no-assume-unchanged public/javascripts/script.js  public/stylesheets/style.css public/javascripts/control_panel.js'
 #
-alias ggrep="grep -r --exclude-dir='man' --exclude-dir='.to_delete' --exclude-dir='log' --exclude-dir='.git' --exclude='*.swp' --exclude='*.obsolete'"
+function ggrep () {
+  GREP_OPTIONS='-ri --color'
+  # Exclude certain directories
+  for PATTERN in .git man .to_delete log .swp; do
+    GREP_OPTIONS="$GREP_OPTIONS --exclude-dir=$PATTERN" 
+  done
+
+  # Exclude certain file types
+  for TYPE in swp obsolete; do
+    GREP_OPTIONS="$GREP_OPTIONS --exclude='*.$TYPE'" 
+  done
+
+  grep $GREP_OPTIONS $@
+}
 
 alias fpaste="fpaste -n fotios -o"
 
@@ -32,3 +44,34 @@ alias htop="htop -u $USER"
 alias lL="find . -maxdepth 1 -type l -exec ls -la --color {} \;"
 
 function mcd() { [ -n "$1" ] && mkdir -p "$@" && cd "$1"; }
+
+
+alias cpp='ionice -c2 rsync -aPO'
+alias mvp='cpp --remove-source-files'
+
+# This can be run simply by passing it the outputs from pgrep:
+# my_renice $(pgrep application)
+#
+# You may also want to use pgrep to find more complex processes based on arguments
+# my_renice $(pgrep -f "bash.*$name")
+
+function my_renice(){
+  newnice=0
+  pid=$1
+
+  # Return if pid not found
+  if [ -z $pid ]; then return; fi
+
+  # Renice pid right away in case we spawn more children
+  renice $newnice $pid
+
+  # Find children pids
+  children=$(pgrep -d ' ' -P $pid)
+
+  # Loop through children
+  for i in $children; do my_renice $i; done
+}
+
+wvim(){
+  vim `which $1`
+}

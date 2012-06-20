@@ -6,3 +6,45 @@ PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting
 ps1_set
 
 export USE_BUNDLER=force
+
+
+## Use RVM if available
+## Argument: the gemset to use (system by default)
+#ruby_do(){
+#  args=(${@})
+#  num_args=${#args[@]}
+#
+#  rvm="system"
+#  cmd="$@"
+#
+#  if [ $num_args -gt 1 ]; then
+#    rvm=${args[0]}
+#  fi
+#
+#  can_use_rvm $rvm
+#
+#  if [ $? -eq 0 ]; then
+#    cmd=${args[@]:1}
+#    $(rvm "${rvm}" do $cmd)
+#  else
+#    ${cmd}
+#  fi
+#}
+#
+## Check if we can use RVM and the specific ruby/gemset
+#can_use_rvm(){
+#  type rvm &> /dev/null
+#
+#  if [ $? ]; then
+#    type='system'
+#    if [ -n "$1" ]; then type=$1; fi
+#
+#    current_ruby=$(rvm current)
+#    rvm use $type &> /dev/null
+#    retval=$?
+#    rvm use $current_ruby &> /dev/null
+#    return $retval
+#  else
+#    return 1
+#  fi
+#}

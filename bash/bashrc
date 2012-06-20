@@ -16,3 +16,4 @@ for f in $HOME/.bash/completions/*; do source $f; done
 complete -cf sudo
 
 export EDITOR="vim"
+export BROWSER="google-chrome"

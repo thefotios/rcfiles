@@ -1,6 +1,7 @@
 [user]
   name = Fotios Lindiakos
-  email = fotioslindiakos@gmail.com
+  #email = fotioslindiakos@gmail.com
+  email = fotios@redhat.com
 [color]
   ui = auto
 [color "branch"]
@@ -26,8 +27,10 @@
   wc = whatchanged
   fix = commit --amend -C HEAD
   d = diff
-  pa = submodule foreach git pull
+  pa = submodule foreach git fetch
+  sb = submodule foreach git status -sb
   lc = log ORIG_HEAD.. --stat --no-merges
+  sync = "!f() { echo Syncing $1 with master && git checkout master && git pull && git checkout $1 && git rebase master; }; f"
 [core]
   excludesfile = /home/fotios/.gitignore
   whitespace=fix,-indent-with-non-tab,trailing-space,cr-at-eol

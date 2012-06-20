@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+# Run devenv commands
+# Change the second line if you're not using RVM
+run_devenv(){
+  pushd ~/openshift/li/ > /dev/null
+  rvm system do build/devenv $@
+  popd > /dev/null
+}
+
+# Launch devenv using these default commands, update /etc/hosts, and sync
+# Arguments: the name of your devenv and any additional launch options (or change ENV variable)
+export DEV_LAUNCH_OPTIONS="--express-server --ssh-config-verifier --verifier"
+dev_launch(){
+  run_devenv launch $@ $DEV_LAUNCH_OPTIONS
+  update_hosts
+  dev_sync --clean-metadata
+}
+
+# Sync your devenv
+dev_sync(){
+  run_devenv sync verifier $@
+}
+
+# Run the watch command
+dev_watch(){
+  run_devenv watch
+}
+
+# Update your /etc/hosts file with the current value for verifier
+update_hosts(){
+  server=$(awk '/Host verifier/{flag=1;next} /^#/{next} !/^\s*HostName/{next} /^\s*$/ {flag=0} flag {print $2}' ~/.ssh/config)
+
+  if [ "$server" ]
+  then
+    sudo sed -i "s/.*\(devenv.openshift.redhat.com\)$/$server \t\1/" /etc/hosts
+  else
+    echo "No server specified"
+  fi
+}
+
+# Set proxies for running the rhc commands against any EC2 based instances
+set_proxy(){
+  _proxy="file.rdu.redhat.com:3128"
+  export http_proxy=$_proxy
+  export https_proxy=$_proxy
+}
+
+# Tails the logs from your devenv
+# Arguments: site or broker (otherwise it will tail both)
+tail_logs(){
+  type='*' 
+  if [ -n "$1" ]; then type=$1; fi
+  ssh verifier "tail -f /var/www/stickshift/${type}/log/*"
+}
